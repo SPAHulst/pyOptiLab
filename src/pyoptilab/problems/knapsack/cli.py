@@ -1,3 +1,4 @@
+import numpy as np
 import typer
 from rich import print
 
@@ -25,6 +26,12 @@ def validate_range(min: int, max: int, *, name: str) -> None:
         )
 
 
+def get_seed_sequence(base_seed: int, size: int) -> list[int]:
+    sequence_generator = np.random.SeedSequence(base_seed)
+    seed_sequence = sequence_generator.generate_state(size)
+    return list(seed_sequence)
+
+
 @command(generate_app, "uniform")
 def uniform(
     items: int = typer.Option(default=..., min=1, help="Number of items to generate"),
@@ -37,7 +44,7 @@ def uniform(
         max=1,
         help="Capacity of knapsack as ratio of total weight of items",
     ),
-    seed: int = typer.Option(default=..., min=0, help="Seed to initialize PRNG"),
+    base_seed: int = typer.Option(default=..., min=0, help="Seed to initialize PRNG"),
     weight_min: int = typer.Option(default=1, min=1, help="Minimum weight of items"),
     weight_max: int = typer.Option(default=100, min=1, help="Maximum weight of items"),
     value_min: int = typer.Option(default=1, min=0, help="Minimum value of items"),
@@ -54,7 +61,9 @@ def uniform(
     validate_range(weight_min, weight_max, name="weight")
     validate_range(value_min, value_max, name="value")
 
-    for i in range(instances):
+    seeds = get_seed_sequence(base_seed, instances) if instances != 1 else [base_seed]
+
+    for i, seed in enumerate(seeds, start=1):
         instance = KnapsackGenerator.uniform(
             num_items=items,
             capacity=capacity,
