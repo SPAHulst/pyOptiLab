@@ -14,7 +14,17 @@ class KnapsackInstance:
     def num_items(self) -> int:
         return self.weights.size
 
-    def __post_init__(self):
+    def __eq__(self, other) -> bool:
+        if not isinstance(other, KnapsackInstance):
+            return NotImplemented
+
+        return (
+            (self.capacity == other.capacity)
+            and (np.array_equal(self.weights, other.weights))
+            and (np.array_equal(self.values, other.values))
+        )
+
+    def __post_init__(self) -> None:
         if self.capacity <= 0:
             raise ValueError("capacity must be positive")
 
