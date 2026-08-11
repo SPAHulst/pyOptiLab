@@ -28,6 +28,9 @@ class KnapsackInstance:
         if self.capacity <= 0:
             raise ValueError("capacity must be positive")
 
+        if self.weights.ndim != 1 or self.values.ndim != 1:
+            raise ValueError("weights and values must be 1-D arrays")
+
         if self.weights.shape != self.values.shape:
             raise ValueError("weights and values must have identical shape")
 
