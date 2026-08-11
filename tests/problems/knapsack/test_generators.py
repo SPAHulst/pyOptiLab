@@ -40,6 +40,12 @@ GENERATORS = [
         ),
         (
             10,
+            np.array([(1, 2), (3, 4)], dtype=np.int32),
+            np.array([(10, 20), (30, 40)], dtype=np.int32),
+            "weights and values must be 1-D arrays",
+        ),
+        (
+            10,
             np.array([1, 2], dtype=np.int32),
             np.array([10], dtype=np.int32),
             "weights and values must have identical shape",
