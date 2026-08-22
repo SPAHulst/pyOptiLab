@@ -74,7 +74,8 @@ class KnapsackGenerator:
             endpoint=True,
         )
 
-        if capacity is None:
+        if capacity is None and capacity_ratio is not None:
             capacity = int(np.sum(weights) * capacity_ratio)
+        assert capacity is not None
 
         return KnapsackInstance(capacity=capacity, weights=weights, values=values)
