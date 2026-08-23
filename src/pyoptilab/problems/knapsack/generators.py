@@ -1,4 +1,8 @@
+import dataclasses
+import json
 from dataclasses import dataclass
+from datetime import datetime
+from pathlib import Path
 
 import numpy as np
 from numpy.typing import NDArray
@@ -42,6 +46,36 @@ class KnapsackInstance:
 
         self.weights.flags.writeable = False
         self.values.flags.writeable = False
+
+    @staticmethod
+    def export_to_json(
+        instances: list[KnapsackInstance], tag: str | None = None
+    ) -> Path:
+        instance_dicts = []
+
+        for i, instance in enumerate(instances):
+            dict = dataclasses.asdict(instance)
+            for key, value in dict.items():
+                if key != "capacity":
+                    dict[key] = value.tolist()
+
+            dict["id"] = i
+            instance_dicts.append(dict)
+
+        experiment = {
+            "generated_at": datetime.now().astimezone().isoformat(),
+            "num_instances": len(instance_dicts),
+            "instances": instance_dicts,
+        }
+
+        tag_part = f"{tag}_" if tag else ""
+        file_name = (
+            f"instances_{tag_part}{datetime.now().astimezone():%Y%m%d_%H%M%S}.json"
+        )
+        path = Path(__file__).parent / "instances" / file_name
+
+        path.write_text(json.dumps(experiment, indent=2))
+        return path
 
 
 class KnapsackGenerator:
