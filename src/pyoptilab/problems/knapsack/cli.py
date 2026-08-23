@@ -2,7 +2,7 @@ import numpy as np
 import typer
 from rich import print
 
-from pyoptilab.problems.knapsack.generators import KnapsackGenerator
+from pyoptilab.problems.knapsack.generators import KnapsackGenerator, KnapsackInstance
 from pyoptilab.typer_config import command, create_app
 
 app = create_app()
@@ -32,6 +32,12 @@ def get_seed_sequence(base_seed: int, size: int) -> list[int]:
     return list(seed_sequence)
 
 
+def export_instances(instances: list[KnapsackInstance]) -> None:
+    print(
+        f"Exported generated instances to {KnapsackInstance.export_to_json(instances)}"
+    )
+
+
 @command(generate_app, "uniform")
 def uniform(
     items: int = typer.Option(default=..., min=1, help="Number of items to generate"),
@@ -54,7 +60,7 @@ def uniform(
     ),
 ) -> None:
     """
-    Generate an instance of the Knapsack Problem with weights and values drawn from uniform distribution
+    Generate an experiment set of instances of the Knapsack Problem with weights and values drawn from uniform distribution
     """
 
     validate_capacity(capacity, capacity_ratio)
@@ -62,9 +68,8 @@ def uniform(
     validate_range(value_min, value_max, name="value")
 
     seeds = get_seed_sequence(base_seed, instances) if instances != 1 else [base_seed]
-
-    for i, seed in enumerate(seeds, start=1):
-        instance = KnapsackGenerator.uniform(
+    experiment = [
+        KnapsackGenerator.uniform(
             num_items=items,
             capacity=capacity,
             capacity_ratio=capacity_ratio,
@@ -72,5 +77,7 @@ def uniform(
             weight_range=(weight_min, weight_max),
             value_range=(value_min, value_max),
         )
+        for seed in seeds
+    ]
 
-        print(f"{i}-th instance: {instance}")
+    export_instances(experiment)
