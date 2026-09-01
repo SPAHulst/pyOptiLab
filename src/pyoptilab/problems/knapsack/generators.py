@@ -6,6 +6,15 @@ from pathlib import Path
 
 import numpy as np
 from numpy.typing import NDArray
+from rich import print
+
+
+class ExperimentFileError(Exception):
+    """The experiment JSON file is missing, unreadable or malformed such that makes it impossible to proceed"""
+
+
+class InstanceParsingError(Exception):
+    """An instance dict could not be converted to a KnapsackInstance"""
 
 
 @dataclass(frozen=True, slots=True)
@@ -48,9 +57,7 @@ class KnapsackInstance:
         self.values.flags.writeable = False
 
     @staticmethod
-    def export_to_json(
-        instances: list[KnapsackInstance], tag: str | None = None
-    ) -> Path:
+    def export_to_json(instances: list[KnapsackInstance], tag: str | None) -> Path:
         instance_dicts = []
 
         for i, instance in enumerate(instances):
@@ -64,18 +71,64 @@ class KnapsackInstance:
 
         experiment = {
             "generated_at": datetime.now().astimezone().isoformat(),
-            "num_instances": len(instance_dicts),
             "instances": instance_dicts,
         }
 
-        tag_part = f"{tag}_" if tag else ""
-        file_name = (
-            f"instances_{tag_part}{datetime.now().astimezone():%Y%m%d_%H%M%S}.json"
+        tag_part = (
+            f"{tag}"
+            if tag is not None
+            else f"{datetime.now().astimezone():%Y%m%d_%H%M%S}"
         )
+        file_name = f"instances_{tag_part}.json"
         path = Path(__file__).parent / "instances" / file_name
 
         path.write_text(json.dumps(experiment, indent=2))
         return path
+
+    @classmethod
+    def from_json(cls, instances_path: Path) -> list[KnapsackInstance]:
+        experiment_dict = cls._load_experiment_dict(instances_path)
+
+        try:
+            instance_dicts = experiment_dict["instances"]
+        except KeyError as e:
+            raise ExperimentFileError(
+                f"Key 'instances' is missing from {instances_path}: {e}"
+            ) from e
+
+        instances: list[KnapsackInstance] = []
+        for index, instance_dict in enumerate(instance_dicts):
+            try:
+                instances.append(cls._instance_from_dict(instance_dict))
+            except InstanceParsingError as e:
+                print(f"Skipping instance {index} from {instances_path} due to {e}")
+
+        return instances
+
+    @staticmethod
+    def _load_experiment_dict(instances_path: Path) -> dict:
+        try:
+            with open(instances_path, "r") as file:
+                return json.load(file)
+        except FileNotFoundError:
+            raise ExperimentFileError(f"No such file: {instances_path.name}")
+        except json.JSONDecodeError as e:
+            raise ExperimentFileError(
+                f"Failed to decode JSON file: {instances_path.name}, due to {e}"
+            )
+
+    @classmethod
+    def _instance_from_dict(cls, instance_dict: dict) -> KnapsackInstance:
+        try:
+            capacity = int(instance_dict["capacity"])
+            weights = np.asarray(instance_dict["weights"], dtype=np.int32)
+            values = np.asarray(instance_dict["values"], dtype=np.int32)
+        except KeyError as e:
+            raise InstanceParsingError(f"Missing key {e}") from e
+        except (ValueError, TypeError) as e:
+            raise InstanceParsingError(f"Invalid value: {e}") from e
+
+        return cls(capacity=capacity, weights=weights, values=values)
 
 
 class KnapsackGenerator:
