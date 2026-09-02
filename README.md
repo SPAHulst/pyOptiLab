@@ -10,8 +10,6 @@ Current and planned problems include:
 - Graph Coloring
 - Traveling Salesman Problem (TSP)
 - Scheduling problems
-- Constraint Satisfaction Problems (CSP)
-- ...and many more.
 
 ## Running
 
@@ -29,10 +27,24 @@ Run the CLI:
 uv run pyoptilab --help
 ```
 
-Example:
+For each problem, three different commands are exposed in general
+
+- generate : generates instances from a certain distribution and exports them to a json file
 
 ```bash
-uv run pyoptilab knapsack generate uniform --help
+uv run pyoptilab <PROBLEM> generate --help
+```
+
+- solve : solves instances extracted from json instance files with specific solvers
+
+```bash
+uv run pyoptilab <PROBLEM> solve --help
+```
+
+- run : generates instances from a certain distribution and directly solves them with specific solvers
+
+```bash
+uv run pyoptilab <PROBLEM> run --help
 ```
 
 ## Status

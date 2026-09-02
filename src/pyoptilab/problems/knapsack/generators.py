@@ -3,6 +3,7 @@ import json
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
+from typing import Any
 
 import numpy as np
 from numpy.typing import NDArray
@@ -106,7 +107,7 @@ class KnapsackInstance:
         return instances
 
     @staticmethod
-    def _load_experiment_dict(instances_path: Path) -> dict:
+    def _load_experiment_dict(instances_path: Path) -> dict[str, Any]:
         try:
             with open(instances_path, "r") as file:
                 return json.load(file)
